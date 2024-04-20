@@ -1,28 +1,20 @@
 using DentalAppAPIDemo.Entites;
-using DentalAppAPIDemo.Repositories.Abstract;
-using DentalAppAPIDemo.Repositories.Concrete;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddScoped<IPatientRepository, PatientRepository>();
-
-
 builder.Services.Configure<DataBaseSettings>(
-                builder.Configuration.GetSection(nameof(DataBaseSettings)));
+    builder.Configuration.GetSection(nameof(DataBaseSettings)));
 
 builder.Services.AddSingleton<DataBaseSettings>(sp =>
     sp.GetRequiredService<IOptions<DataBaseSettings>>().Value);
 
-// //builder.Services.Configure<DataBaseSettings>(
-// //    builder.Configuration.GetSection(nameof(DataBaseSettings)));
-
-
 builder.Services.AddSingleton<IMongoClient>(s =>
-        new MongoClient(builder.Configuration.GetValue<string>("DataBaseSettings:ConnectionString")));
+    new MongoClient(builder.Configuration.GetValue<string>("DataBaseSettings:ConnectionString")));
 
+ //builder.Services.AddScoped<IPatientRepository, PatientRepository>(); // error point
 
 
 builder.Services.AddControllers();

@@ -1,9 +1,8 @@
 ﻿using DentalAppAPIDemo.Entites;
-using DentalAppAPIDemo.Repositories.Abstract;
 using Microsoft.AspNetCore.Mvc;
-using SharpCompress.Common;
+using MongoDB.Driver;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
 
 namespace DentalAppAPIDemo.Controllers
 {
@@ -12,51 +11,69 @@ namespace DentalAppAPIDemo.Controllers
     public class PatientController : ControllerBase
     {
 
-        private readonly IPatientRepository _patientRepository;
+        private readonly IConfiguration _configuration;
+        private readonly IMongoClient _mongoClient;
+        private readonly IMongoCollection<PatientsEntity> _patients;
 
-        public PatientController(IPatientRepository patientRepository)
+        public PatientController(IConfiguration configuration)
         {
-              _patientRepository = patientRepository;
+
+            _configuration = configuration;
+            var settings = MongoClientSettings.FromConnectionString(_configuration.GetConnectionString("ConnectionString"));
+            settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+            _mongoClient = new MongoClient(settings);
+            IMongoDatabase database = _mongoClient.GetDatabase("test");
+            _patients = database.GetCollection<PatientsEntity>("patient");
         }
 
         // GET: api/<PatientController>
         [HttpGet]
         public ActionResult<List<PatientsEntity>> GetPatient()
         {
-            return _patientRepository.Get();
+            return  _patients.Find(PatientsEntity => true).ToList();
+
         }
 
         // GET api/<PatientController>/5
         [HttpGet("{id}")]
-        public ActionResult<PatientsEntity> GetPatientById(string id)
-        {
-            var patient = _patientRepository.Get(id);
-            if (id == null)
-                return NotFound($"Patient With Id={id} Not Found");
+        //public ActionResult<PatientsEntity> GetPatientById(string id)
+        //{
+        //    var patient = _patients.Get(id);
+        //    if (id == null)
+        //        return NotFound($"Patient With Id={id} Not Found");
 
-            return patient;
+        //    return patient;
 
-        }
+        //}
 
         // POST api/<PatientController>
         [HttpPost]
-        public ActionResult<PatientsEntity> AddPatient([FromBody] PatientsEntity patient)
+        [Route("api/[controller]/[AddPatient]")]
+        public ActionResult<PatientsEntity> AddPatient( PatientsEntity patient)
         {
-            _patientRepository.Create(patient);
+            patient.Id = "";
+            _patients.InsertOne(patient);
 
-            return CreatedAtAction(nameof(GetPatient), new { id = patient.ID }, patient);
+            return CreatedAtAction(nameof(GetPatient), new { id = patient.Id }, patient);
 
         }
-
+      
         // PUT api/<PatientController>/5
         [HttpPut("{id}")]
-        public ActionResult UpdatePatient(string id, [FromBody] PatientsEntity entity)
+        public  ActionResult UpdatePatient(string id, PatientsEntity patient)
         {
-            var existingPatient = _patientRepository.Get(id);
-            if (existingPatient == null)
+            try
+            {
+                var existingId = _patients.Find(p => p.Id == id).FirstOrDefault();
+            }
+            catch (Exception)
+            {
                 return NotFound($"Patient With Id={id} Not Found");
 
-            _patientRepository.Update(id, entity);
+            }
+           
+            patient.Id = id;
+            _patients.ReplaceOne(patients => patients.Id == id, patient);
 
             return NoContent();
         }
@@ -65,11 +82,11 @@ namespace DentalAppAPIDemo.Controllers
         [HttpDelete("{id}")]
         public ActionResult DeletePatient(string id)
         {
-            var existingPatient = _patientRepository.Get(id);
-            if (existingPatient == null)
-                return NotFound($"Patient With Id={id} Not Found");
 
-            _patientRepository.Delete(id);
+            var existingId = _patients.Find(p => p.Id == id).FirstOrDefault();
+            if (existingId == null)
+                return NotFound($"Patient With Id={id} Not Found");
+            _patients.DeleteOne(p => p.Id == id);
 
             return Ok($"Patient With Id={id} Deleted");
         }

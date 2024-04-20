@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 
 
@@ -8,9 +9,18 @@ namespace DentalAppAPIDemo.Entites
     [BsonIgnoreExtraElements]
     public class PatientsEntity
     {
+        public enum GenderType
+        {
+            Male,
+            Female,
+            NonBinary,
+            Other
+        }
+         
+
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string ID { get; set; }
+        public string Id { get; set; }
 
         [BsonElement("name")]
         public string Name { get; set; }
@@ -19,7 +29,7 @@ namespace DentalAppAPIDemo.Entites
         public string Surname { get; set; }
 
         [BsonElement("gender")]
-        public bool Gender { get; set; }
+        public GenderType Gender { get; set; }
 
         [BsonElement("age")]
         public int Age { get; set; }
