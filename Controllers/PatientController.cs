@@ -36,19 +36,18 @@ namespace DentalAppAPIDemo.Controllers
 
         // GET api/<PatientController>/5
         [HttpGet("{id}")]
-        //public ActionResult<PatientsEntity> GetPatientById(string id)
-        //{
-        //    var patient = _patients.Get(id);
-        //    if (id == null)
-        //        return NotFound($"Patient With Id={id} Not Found");
+        public ActionResult<PatientsEntity> GetPatientById(string id)
+        {
+            var patient = _patients.Find(patients => patients.Id == id).FirstOrDefault();
+            if (id == null)
+                return NotFound($"Patient With Id={id} Not Found");
 
-        //    return patient;
+            return patient;
 
-        //}
+        }
 
         // POST api/<PatientController>
         [HttpPost]
-        [Route("api/[controller]/[AddPatient]")]
         public ActionResult<PatientsEntity> AddPatient( PatientsEntity patient)
         {
             patient.Id = "";
